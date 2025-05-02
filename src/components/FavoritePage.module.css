@@ -1,0 +1,22 @@
+.noFavorites {
+  text-align: center;
+  padding: 40px 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  margin-top: 40px;
+}
+
+.sadPokemon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+}
+
+.noFavorites h2 {
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.noFavorites p {
+  color: #666;
+  margin-bottom: 20px;
+}

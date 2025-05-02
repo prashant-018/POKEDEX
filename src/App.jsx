@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import PokemonList from './components/PokemonList';
 import PokemonSearch from './components/PokemonSearch';
 import LoadingOverlay from './components/LoadingOverlay';
 import PokemonModal from './components/PokemonModal';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import './App.css';
 
 function App() {
@@ -13,106 +15,146 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState(null);
-  const [currentLimit, setCurrentLimit] = useState(150);
-  const [totalCount, setTotalCount] = useState(0);
-  const [selectedPokemon, setSelectedPokemon] = useState(null); // ✅ this was in a wrong component
+  const [selectedPokemon, setSelectedPokemon] = useState(null);
+  const [favorites, setFavorites] = useState(() => {
+    try {
+      const saved = localStorage.getItem('pokemonFavorites');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  const INITIAL_LOAD = 150;
+  const LOAD_MORE_COUNT = 25;
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       setError(null);
+
       try {
-        const countResponse = await fetch('https://pokeapi.co/api/v2/pokemon');
-        const countData = await countResponse.json();
-        setTotalCount(countData.count);
+        const countRes = await fetch('https://pokeapi.co/api/v2/pokemon');
+        if (!countRes.ok) throw new Error('Failed to fetch Pokémon count');
+        const countData = await countRes.json();
 
-        const response = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${currentLimit}`);
-        const data = await response.json();
+        const res = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${INITIAL_LOAD}`);
+        if (!res.ok) throw new Error('Failed to fetch Pokémon list');
+        const data = await res.json();
 
-        const pokemonDetails = await Promise.all(
-          data.results.map(pokemon =>
-            fetch(pokemon.url).then(res => res.json())
+        const detailedData = await Promise.all(
+          data.results.map(p =>
+            fetch(p.url)
+              .then(res => {
+                if (!res.ok) throw new Error(`Failed to fetch data for ${p.name}`);
+                return res.json();
+              })
           )
         );
 
-        setPokemonData(pokemonDetails);
-        setFilteredPokemon(pokemonDetails);
-        setDisplayedPokemon(pokemonDetails.slice(0, currentLimit));
+        const enriched = detailedData.map(p => ({
+          ...p,
+          isFavorite: favorites.has(p.id),
+        }));
 
-        const types = new Set();
-        pokemonDetails.forEach(p => {
-          p.types.forEach(t => types.add(t.type.name));
-        });
-        setAllTypes(['all', ...Array.from(types).sort()]);
+        setPokemonData(enriched);
+        setFilteredPokemon(enriched);
+        setDisplayedPokemon(enriched.slice(0, LOAD_MORE_COUNT));
+
+        // Extract all unique types
+        const typesSet = new Set();
+        enriched.forEach(p =>
+          p.types.forEach(t => typesSet.add(t.type.name))
+        );
+        setAllTypes(['all', ...Array.from(typesSet).sort()]);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || 'Failed to fetch Pokémon data.');
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [currentLimit]);
+  }, []);
 
-  const handleSearch = (searchTerm, selectedType) => {
-    const filtered = pokemonData.filter(pokemon => {
-      const matchesName = pokemon.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesType = selectedType === 'all' ||
-        pokemon.types.some(t => t.type.name === selectedType);
+  const handleSearch = (term, selectedType) => {
+    const filtered = pokemonData.filter(p => {
+      const matchesName = p.name.toLowerCase().includes(term.toLowerCase());
+      const matchesType =
+        selectedType === 'all' || p.types.some(t => t.type.name === selectedType);
       return matchesName && matchesType;
     });
+
     setFilteredPokemon(filtered);
-    setDisplayedPokemon(filtered.slice(0, currentLimit));
+    setDisplayedPokemon(filtered.slice(0, LOAD_MORE_COUNT));
+  };
+
+  const toggleFavorite = (pokemonId) => {
+    setFavorites(prev => {
+      const updated = new Set(prev);
+      if (updated.has(pokemonId)) {
+        updated.delete(pokemonId);
+      } else {
+        updated.add(pokemonId);
+      }
+      localStorage.setItem('pokemonFavorites', JSON.stringify([...updated]));
+      return updated;
+    });
   };
 
   const loadMore = async () => {
     if (displayedPokemon.length >= filteredPokemon.length) return;
+
     setIsLoadingMore(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(res => setTimeout(res, 500)); // simulate loading delay
       const nextBatch = filteredPokemon.slice(
         displayedPokemon.length,
-        displayedPokemon.length + 25
+        displayedPokemon.length + LOAD_MORE_COUNT
       );
       setDisplayedPokemon(prev => [...prev, ...nextBatch]);
-      setCurrentLimit(prev => prev + 25);
     } finally {
       setIsLoadingMore(false);
     }
   };
 
   return (
-    <div className="app">
-      <LoadingOverlay isLoading={isLoading} />
-      <h1 className="app-title">Pokédex</h1>
+    <ErrorBoundary>
+      <div className="app">
+        <LoadingOverlay isLoading={isLoading} />
+        <h1 className="app-title">Pokédex</h1>
 
-      {error ? (
-        <div className="error">{error}</div>
-      ) : (
-        <>
-          <PokemonSearch
-            onSearch={handleSearch}
-            allTypes={allTypes}
-          />
-          <PokemonList
-            pokemons={displayedPokemon}
-            loadMore={loadMore}
-            hasMore={displayedPokemon.length < filteredPokemon.length}
-            isLoadingMore={isLoadingMore}
-            totalCount={totalCount}
-            displayedCount={displayedPokemon.length}
-            onCardClick={(pokemon) => setSelectedPokemon(pokemon)} // ✅ pass click handler
-          />
-        </>
-      )}
+       
 
-      {selectedPokemon && (
-        <PokemonModal
-          pokemon={selectedPokemon}
-          onClose={() => setSelectedPokemon(null)}
-        />
-      )}
-    </div>
+        {error ? (
+          <div className="error">{error}</div>
+        ) : (
+          <>
+            <PokemonSearch onSearch={handleSearch} allTypes={allTypes} />
+            <PokemonList
+              pokemons={displayedPokemon}
+              loadMore={loadMore}
+              hasMore={displayedPokemon.length < filteredPokemon.length}
+              isLoadingMore={isLoadingMore}
+              totalCount={filteredPokemon.length}
+              displayedCount={displayedPokemon.length}
+              onCardClick={setSelectedPokemon}
+              onFavoriteClick={toggleFavorite}
+              favorites={favorites}
+            />
+          </>
+        )}
+
+        {selectedPokemon && (
+          <PokemonModal
+            pokemon={selectedPokemon}
+            onClose={() => setSelectedPokemon(null)}
+            onFavoriteToggle={toggleFavorite}
+            isFavorite={favorites.has(selectedPokemon.id)}
+          />
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }
 

@@ -1,0 +1,36 @@
+.errorContainer {
+  padding: 2rem;
+  margin: 2rem auto;
+  max-width: 500px;
+  border: 2px solid #f44336;
+  background-color: #fff0f0;
+  color: #b71c1c;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.errorContainer h2 {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+}
+
+.errorContainer p {
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.errorContainer button {
+  padding: 0.6rem 1.2rem;
+  background-color: #f44336;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+
+.errorContainer button:hover {
+  background-color: #d32f2f;
+}

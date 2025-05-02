@@ -1,0 +1,28 @@
+.compareContainer {
+  padding: 1rem;
+  max-width: 800px;
+  margin: auto;
+}
+
+.selectors {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.selectors select {
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+.statsComparison table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.statsComparison th,
+.statsComparison td {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  text-align: center;
+}

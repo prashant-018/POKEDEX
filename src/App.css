@@ -225,3 +225,77 @@
   z-index: -1;
   pointer-events: none;
 }
+
+/* Favorites Toggle Button */
+.favorites-toggle {
+  margin: 15px 0;
+  text-align: center;
+}
+
+.favorites-toggle button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 20px;
+  background-color: #f0f0f0;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.favorites-toggle button:hover {
+  background-color: #e0e0e0;
+}
+
+.favorites-toggle button.active {
+  background-color: #ff6b6b;
+  color: white;
+}
+
+.favorites-toggle button.active:hover {
+  background-color: #ff5252;
+}
+
+
+/* Add these new styles at the bottom of your file */
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.compare-toggle {
+  padding: 0.5rem 1rem;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.compare-toggle:hover {
+  background: #45a049;
+}
+
+.compare-toggle.active {
+  background: #f44336;
+}
+
+.compare-toggle.active:hover {
+  background: #d32f2f;
+}
+
+
+.favorites-link {
+  margin-bottom: 1rem;
+  display: inline-block;
+  color: red;
+  text-decoration: none;
+}
+.favorites-link:hover {
+  text-decoration: underline;
+}
